@@ -18,6 +18,7 @@
         </div>
       </div>
     </div>
+    <p id="anchor2" style="height:500px">Anchor2</p>
   </div>
 </template>
 
@@ -25,6 +26,7 @@
 import workItem from './components/workItem'
 import { mapState, mapActions } from 'vuex'
 export default {
+  name: 'Home',
   data () {
     return {
       images: [
@@ -57,10 +59,10 @@ export default {
 .index{
   .swip-wrapper{
     width: 100%;
-    height: 280px;
+    height: 290px;
     img{
       width: 100%;
-      height: 280px;
+      height: 290px;
     }
   }
   .page-moudle{

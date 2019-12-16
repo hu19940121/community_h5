@@ -27,7 +27,7 @@ if (process.env.NODE_ENV === 'production') {
   mockXHR()
 }
 
-FastClick.attach(document.body)
+// FastClick.attach(document.body)
 
 // options 为可选参数，无则不传
 Vue.use(Lazyload).use(Row).use(Col).use(Swipe).use(SwipeItem).use(Button)

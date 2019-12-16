@@ -17,6 +17,18 @@ let routes = [
   //   }
   // },
   {
+    path: '/test',
+    name: 'Test',
+    component: () => import('@/views/test'),
+    meta: { title: 'test' }
+  },
+  {
+    path: '/testDetail',
+    name: 'TestDetail',
+    component: () => import('@/views/testDetail'),
+    meta: { title: 'testDetail' }
+  },
+  {
     path: '/',
     component: Layout,
     redirect: '/home',
@@ -25,7 +37,7 @@ let routes = [
         path: 'home',
         name: 'Home',
         component: () => import('@/views/home'),
-        meta: { title: '首页' }
+        meta: { title: '首页', keepAlive: true }
       },
       {
         path: 'opusDetail',
@@ -67,7 +79,15 @@ routes = routes.concat({
 const createRouter = () => new Router({
   mode: 'history', // require service support
   base: process.env.BASE_URL,
-  scrollBehavior: () => ({ y: 0 }),
+  // scrollBehavior: () => ({ y: 0 }),
+  scrollBehavior: (to, from, savedPosition) => {
+    console.log('---------savedPosition', savedPosition)
+    if (savedPosition) {
+      return savedPosition
+    } else {
+      return { x: 0, y: 0 }
+    }
+  },
   routes
 })
 
@@ -94,14 +114,17 @@ myRouter.beforeEach((to, from, next) => {
     if (toIndex) {
       if (!fromIndex || parseInt(toIndex, 10) > parseInt(fromIndex, 10) || (toIndex === '0' && fromIndex === '0')) {
         store.commit('updateDirection', 'forward')
+        store.dispatch('app/addCachedView', to) // 缓存页面
       } else {
         store.commit('updateDirection', 'back')
+        store.dispatch('app/delCachedView', from) // 后退 删除页面缓存 初步实现前进刷新后退不刷新（基于keep-alive）
       }
     } else {
       ++historyCount
       history.setItem('count', historyCount)
       to.path !== '/' && history.setItem(to.path, historyCount)
       store.commit('updateDirection', 'forward')
+      store.dispatch('app/addCachedView', to) // 缓存页面
     }
   }
   next()

@@ -10,6 +10,7 @@ const modules = {}
 files.keys().forEach(key => {
   modules[key.replace(/(\.\/|\.js)/g, '')] = files(key).default
 })
+console.log('modules', modules)
 
 export default new Vuex.Store({
   plugins: [createLoadingPlugin()],

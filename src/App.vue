@@ -1,24 +1,24 @@
 <template>
   <div id="app">
-    <transition :name="transitionName">
-      <keep-alive v-if="$route.meta.keepAlive">
+    <!-- <transition :name="transitionName"> -->
+      <!-- <keep-alive v-if="$route.meta.keepAlive"> -->
         <router-view class="router"></router-view>
-      </keep-alive>
-      <router-view class="router" v-else></router-view>
-    </transition>
+      <!-- </keep-alive> -->
+      <!-- <router-view class="router" v-else></router-view> -->
+    <!-- </transition> -->
   </div>
 </template>
 <script>
-import defaultSetting from './settings'
+// import defaultSetting from './settings'
 export default {
   name: 'app',
   computed: {
-    transitionName () {
-      if (defaultSetting.needPageTrans) {
-        return this.$store.state.direction
-      }
-      return ''
-    }
+    // transitionName () {
+    //   if (defaultSetting.needPageTrans) {
+    //     return this.$store.state.direction
+    //   }
+    //   return ''
+    // }
   }
 }
 </script>
