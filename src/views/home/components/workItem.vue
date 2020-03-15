@@ -7,7 +7,7 @@
     </router-link>
     <div class="work-info">
       <p class="name ellipsis padding-tb-xs">{{ info.name }}</p>
-      <p class="author ellipsis">{{ info.user.nickName }}</p>
+      <p class="author ellipsis">{{ info.author && info.author.nickName }}</p>
     </div>
   </div>
 </template>

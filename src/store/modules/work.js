@@ -13,10 +13,12 @@ const mutations = {
 const actions = {
   getWorkList ({ commit }) {
     return new Promise((resolve, reject) => {
-      getWorkList()
+      getWorkList({ pageNum: 1, pageSize: 15 })
         .then(response => {
           const { data } = response
-          commit('setWorkList', data)
+          console.log('data', data)
+
+          commit('setWorkList', data.list)
           resolve(data)
         })
         .catch(error => {

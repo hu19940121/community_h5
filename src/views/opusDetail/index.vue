@@ -19,6 +19,12 @@
       <div class="con" ref="down" @touchend="triggerKeyboardEvent('s',false)" @touchstart="triggerKeyboardEvent('s',true)">s</div>
       <div class="con" ref="let" @touchend="triggerKeyboardEvent('a',false)" @touchstart="triggerKeyboardEvent('a',true)">a</div>
       <div class="con" ref="right" @touchend="triggerKeyboardEvent('d',false)" @touchstart="triggerKeyboardEvent('d',true)">d</div>
+      <div class="con" ref="Space" @touchend="triggerKeyboardEvent(' ',false)" @touchstart="triggerKeyboardEvent(' ',true)">空格</div>
+      <div class="con" ref="ArrowUp" @touchend="triggerKeyboardEvent('ArrowUp',false)" @touchstart="triggerKeyboardEvent('ArrowUp',true)">上</div>
+      <div class="con" ref="ArrowDown" @touchend="triggerKeyboardEvent('ArrowUp',false)" @touchstart="triggerKeyboardEvent('ArrowDown',true)">下</div>
+      <div class="con" ref="ArrowLeft" @touchend="triggerKeyboardEvent('ArrowUp',false)" @touchstart="triggerKeyboardEvent('ArrowLeft',true)">左</div>
+      <div class="con" ref="ArrowRight" @touchend="triggerKeyboardEvent('ArrowUp',false)" @touchstart="triggerKeyboardEvent('ArrowRight',true)">右</div>
+
     </div>
     <div class="opus-content" v-if="!isStart">
 
@@ -34,6 +40,8 @@ import ScratchRender from 'scratch-render'
 import ScratchSVGRenderer from 'scratch-svg-renderer'
 import VirtualMachine from 'scratch-vm'
 import { mapMutations } from 'vuex'
+import { getCompositionInfoById } from '@/api/work'
+
 const keyCodeMap = {
   'w': 87,
   'a': 65,
@@ -43,7 +51,7 @@ const keyCodeMap = {
   'ArrowDown': 40,
   'ArrowLeft': 37,
   'ArrowRight': 39,
-  'Space': 32
+  ' ': 32
 }
 export default {
   data () {
@@ -51,17 +59,31 @@ export default {
       isStart: false,
       startFlag: 'https://edu-image.nosdn.127.net/a06f29b4-b5f2-4105-bb5f-bc284ea3bc35.svg',
       stopFlag: 'https://edu-image.nosdn.127.net/a06f29b4-b5f2-4105-bb5f-bc284ea3bc35.svg',
-      iframeLoaded: false
+      iframeLoaded: false,
+      detail: {},
+      author: {},
+      planetProgramObjectStatistic: {}
     }
   },
   mounted () {
-    this.init()
+    // this.init()
+    this.handleGetCompositionInfoById()
   },
 
   methods: {
     ...mapMutations({
       setHeaderNavVisible: 'app/setHeaderNavVisible'
     }),
+    handleGetCompositionInfoById () {
+      getCompositionInfoById({ id: this.$route.query.id }).then(res => {
+        this.detail = res.data
+        this.detail.currentUserScore = res.data.currentUserScore || 0
+        this.planetProgramObjectStatistic =
+          res.data.planetProgramObjectStatistic
+        this.author = res.data.author
+        this.init()
+      })
+    },
     triggerKeyboardEvent (key, isDown) {
       this.vm.postIOData('keyboard', {
         keyCode: keyCodeMap[key],
@@ -69,7 +91,7 @@ export default {
         isDown
       })
     },
-    init (url = 'https://dev.steam001.com/红黄大战（转载）-k2019/12/16-下午7:38:20.sb3') {
+    init (url = 'https://resource.kaier001.com/Flappy Bird2019/11/11-下午6:58:17.sb3') {
       window.devicePixelRatio = 1
       let canvas = document.getElementById('stage')
       var render = new ScratchRender(canvas)
@@ -85,34 +107,44 @@ export default {
       vm.attachV2SVGAdapter(new ScratchSVGRenderer.SVGRenderer())
       vm.attachV2BitmapAdapter(new ScratchSVGRenderer.BitmapAdapter())
       // Feed mouse events as VM I/O events.
-      document.body.addEventListener('mousemove', e => {
+      document.body.addEventListener('touchmove', e => {
+        // console.log('e', e)
+
         const rect = canvas.getBoundingClientRect()
         const coordinates = {
-          x: e.clientX - rect.left,
-          y: e.clientY - rect.top,
+          // x: e.clientX - rect.left,
+          // y: e.clientY - rect.top,
+          x: e.touches[0].clientX - rect.left,
+          y: e.touches[0].clientY - rect.top,
           canvasWidth: rect.width,
           canvasHeight: rect.height
         }
         vm.postIOData('mouse', coordinates)
       })
-      canvas.addEventListener('mousedown', e => {
+      canvas.addEventListener('touchstart', e => {
         const rect = canvas.getBoundingClientRect()
         const data = {
           isDown: true,
-          x: e.clientX - rect.left,
-          y: e.clientY - rect.top,
+          // x: e.clientX - rect.left,
+          // y: e.clientY - rect.top,
+          x: e.touches[0].clientX - rect.left,
+          y: e.touches[0].clientY - rect.top,
           canvasWidth: rect.width,
           canvasHeight: rect.height
         }
         vm.postIOData('mouse', data)
         e.preventDefault()
       })
-      canvas.addEventListener('mouseup', e => {
+      canvas.addEventListener('touchend', e => {
+        console.log('e', e)
+
         const rect = canvas.getBoundingClientRect()
         const data = {
           isDown: false,
-          x: e.clientX - rect.left,
-          y: e.clientY - rect.top,
+          // x: e.clientX - rect.left,
+          // y: e.clientY - rect.top,
+          x: e.touches[0].clientX - rect.left,
+          y: e.touches[0].clientY - rect.top,
           canvasWidth: rect.width,
           canvasHeight: rect.height
         }

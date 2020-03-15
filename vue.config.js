@@ -52,12 +52,20 @@ module.exports = {
       //     ['^' + process.env.VUE_APP_BASE_API]: ''
       //   }
       // },
-      '/api': {
-        target: 'https://kaier001.com',
-        // target: 'http://127.0.0.1:7001',
+      // '/api': {
+      //   target: 'https://kaier001.com',
+      //   // target: 'http://127.0.0.1:7001',
+      //   changeOrigin: true,
+      //   pathRewrite: {
+      //     '^/api': '/api'
+      //   }
+      // },
+      '/planet/api': {
+        // target: 'http://192.168.3.183:8085',
+        target: 'https://www.steam001.com',
         changeOrigin: true,
         pathRewrite: {
-          '^/api': '/api'
+          '^/planet/api': '/planet/api'
         }
       }
     }
