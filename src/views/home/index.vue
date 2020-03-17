@@ -18,7 +18,7 @@
         </div>
       </div>
     </div>
-    <p id="anchor2" style="height:500px">Anchor2</p>
+    <!-- <p id="anchor2" style="height:500px">Anchor2</p> -->
   </div>
 </template>
 

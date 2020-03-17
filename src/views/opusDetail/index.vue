@@ -1,11 +1,7 @@
 <template>
   <div :class="['opusDetail',{ bb: isStart}]">
     <div class="scratch-player">
-      <canvas
-        class="canvas"
-        id="stage"
-      >
-      </canvas>
+      <iframe class="canvas" @load="handleIframeLoad" ref="iframe" src="/scratchPlayer/player.html" frameborder="0"></iframe>
       <!--操作栏 -->
       <div class="opeBar flex justify-center align-center">
         <div class="flex">
@@ -14,16 +10,16 @@
         </div>
       </div>
     </div>
-    <div class="operation-block" v-if="isStart">
-      <div class="con" ref="up"  @touchend="triggerKeyboardEvent('w',false)" @touchstart="triggerKeyboardEvent('w',true)">w</div>
-      <div class="con" ref="down" @touchend="triggerKeyboardEvent('s',false)" @touchstart="triggerKeyboardEvent('s',true)">s</div>
-      <div class="con" ref="let" @touchend="triggerKeyboardEvent('a',false)" @touchstart="triggerKeyboardEvent('a',true)">a</div>
-      <div class="con" ref="right" @touchend="triggerKeyboardEvent('d',false)" @touchstart="triggerKeyboardEvent('d',true)">d</div>
-      <div class="con" ref="Space" @touchend="triggerKeyboardEvent(' ',false)" @touchstart="triggerKeyboardEvent(' ',true)">空格</div>
-      <div class="con" ref="ArrowUp" @touchend="triggerKeyboardEvent('ArrowUp',false)" @touchstart="triggerKeyboardEvent('ArrowUp',true)">上</div>
-      <div class="con" ref="ArrowDown" @touchend="triggerKeyboardEvent('ArrowUp',false)" @touchstart="triggerKeyboardEvent('ArrowDown',true)">下</div>
-      <div class="con" ref="ArrowLeft" @touchend="triggerKeyboardEvent('ArrowUp',false)" @touchstart="triggerKeyboardEvent('ArrowLeft',true)">左</div>
-      <div class="con" ref="ArrowRight" @touchend="triggerKeyboardEvent('ArrowUp',false)" @touchstart="triggerKeyboardEvent('ArrowRight',true)">右</div>
+    <div class="operation-block" v-show="isStart">
+      <div class="con w">w</div>
+      <div class="con s">s</div>
+      <div class="con a">a</div>
+      <div class="con d">d</div>
+      <div class="con Space">空格</div>
+      <div class="con ArrowUp">上</div>
+      <div class="con ArrowDown">下</div>
+      <div class="con ArrowLeft">左</div>
+      <div class="con ArrowRight">右</div>
 
     </div>
     <div class="opus-content" v-if="!isStart">
@@ -33,15 +29,8 @@
 </template>
 
 <script>
-import axios from 'axios'
-import AudioEngine from 'scratch-audio'
-import ScratchStorage from 'scratch-storage'
-import ScratchRender from 'scratch-render'
-import ScratchSVGRenderer from 'scratch-svg-renderer'
-import VirtualMachine from 'scratch-vm'
 import { mapMutations } from 'vuex'
 import { getCompositionInfoById } from '@/api/work'
-
 const keyCodeMap = {
   'w': 87,
   'a': 65,
@@ -56,6 +45,7 @@ const keyCodeMap = {
 export default {
   data () {
     return {
+      iframeWindow: {},
       isStart: false,
       startFlag: 'https://edu-image.nosdn.127.net/a06f29b4-b5f2-4105-bb5f-bc284ea3bc35.svg',
       stopFlag: 'https://edu-image.nosdn.127.net/a06f29b4-b5f2-4105-bb5f-bc284ea3bc35.svg',
@@ -66,14 +56,58 @@ export default {
     }
   },
   mounted () {
-    // this.init()
-    this.handleGetCompositionInfoById()
+    // dom绑定事件
+    this.bindEvents()
   },
 
   methods: {
     ...mapMutations({
       setHeaderNavVisible: 'app/setHeaderNavVisible'
     }),
+    triggerKeyboardEvent (key, isDown) {
+      this.iframeWindow.vm.postIOData('keyboard', {
+        keyCode: keyCodeMap[key],
+        key: key,
+        isDown
+      })
+    },
+    bindEvents () {
+      for (const key in keyCodeMap) {
+        if (key === ' ') {
+          this.regKeyEvent(`.Space`, ' ', keyCodeMap[key])
+        } else {
+          this.regKeyEvent(`.${key}`, key, keyCodeMap[key])
+        }
+      }
+    },
+    regKeyEvent (selector, key, keyCode) {
+      let that = this
+      document.querySelector(selector).addEventListener('touchstart', function (event) {
+        that.iframeWindow.vm.postIOData('keyboard', {
+          keyCode: keyCode,
+          key: key,
+          isDown: true
+        })
+        event.preventDefault()
+      })
+      document.querySelector(selector).addEventListener('touchend', function (event) {
+        that.iframeWindow.vm.postIOData('keyboard', {
+          keyCode: keyCode,
+          key: key,
+          isDown: false
+        })
+        event.preventDefault()
+      })
+    },
+    // 当iframe加载完
+    handleIframeLoad () {
+      this.iframeWindow = this.$refs.iframe.contentWindow
+      this.iframeWindow.scratch.setPlayerOnly(true)
+      this.iframeWindow.scratch.setFullScreen(true)
+      this.iframeWindow.vm.start()
+      this.handleGetCompositionInfoById()
+    },
+    // 获取作品信息
     handleGetCompositionInfoById () {
       getCompositionInfoById({ id: this.$route.query.id }).then(res => {
         this.detail = res.data
@@ -81,134 +115,20 @@ export default {
         this.planetProgramObjectStatistic =
           res.data.planetProgramObjectStatistic
         this.author = res.data.author
-        this.init()
-      })
-    },
-    triggerKeyboardEvent (key, isDown) {
-      this.vm.postIOData('keyboard', {
-        keyCode: keyCodeMap[key],
-        key: key,
-        isDown
-      })
-    },
-    init (url = 'https://resource.kaier001.com/Flappy Bird2019/11/11-下午6:58:17.sb3') {
-      window.devicePixelRatio = 1
-      let canvas = document.getElementById('stage')
-      var render = new ScratchRender(canvas)
-      var vm = new VirtualMachine()
-      this.vm = vm
-      console.log('vm', vm)
-      var storage = new ScratchStorage()
-      console.log('canvas.width', canvas.width)
-      vm.attachStorage(storage)
-      vm.attachRenderer(render)
-      const audioEngine = new AudioEngine()
-      vm.attachAudioEngine(audioEngine)
-      vm.attachV2SVGAdapter(new ScratchSVGRenderer.SVGRenderer())
-      vm.attachV2BitmapAdapter(new ScratchSVGRenderer.BitmapAdapter())
-      // Feed mouse events as VM I/O events.
-      document.body.addEventListener('touchmove', e => {
-        // console.log('e', e)
-
-        const rect = canvas.getBoundingClientRect()
-        const coordinates = {
-          // x: e.clientX - rect.left,
-          // y: e.clientY - rect.top,
-          x: e.touches[0].clientX - rect.left,
-          y: e.touches[0].clientY - rect.top,
-          canvasWidth: rect.width,
-          canvasHeight: rect.height
-        }
-        vm.postIOData('mouse', coordinates)
-      })
-      canvas.addEventListener('touchstart', e => {
-        const rect = canvas.getBoundingClientRect()
-        const data = {
-          isDown: true,
-          // x: e.clientX - rect.left,
-          // y: e.clientY - rect.top,
-          x: e.touches[0].clientX - rect.left,
-          y: e.touches[0].clientY - rect.top,
-          canvasWidth: rect.width,
-          canvasHeight: rect.height
-        }
-        vm.postIOData('mouse', data)
-        e.preventDefault()
-      })
-      canvas.addEventListener('touchend', e => {
-        console.log('e', e)
-
-        const rect = canvas.getBoundingClientRect()
-        const data = {
-          isDown: false,
-          // x: e.clientX - rect.left,
-          // y: e.clientY - rect.top,
-          x: e.touches[0].clientX - rect.left,
-          y: e.touches[0].clientY - rect.top,
-          canvasWidth: rect.width,
-          canvasHeight: rect.height
-        }
-        vm.postIOData('mouse', data)
-        e.preventDefault()
-      })
-      // Feed keyboard events as VM I/O events.
-      document.body.addEventListener('keydown', e => {
-        console.log('e', e)
-
-        // Don't capture keys intended for Blockly inputs.
-        if (e.target !== document && e.target !== document.body) {
-          return
-        }
-        vm.postIOData('keyboard', {
-          keyCode: e.keyCode,
-          key: e.key,
-          isDown: true
+        this.iframeWindow.scratch.loadProject(res.data.url, () => {
+          console.log('项目加载完毕')
         })
-        e.preventDefault()
       })
-      document.body.addEventListener('keyup', e => {
-        // Always capture up events,
-        // even those that have switched to other targets.
-        vm.postIOData('keyboard', {
-          keyCode: e.keyCode,
-          key: e.key,
-          isDown: false
-        })
-        // E.g., prevent scroll.
-        if (e.target !== document && e.target !== document.body) {
-          e.preventDefault()
-        }
-      })
-
-      // Run threads
-      vm.start()
-      this.spinShow = true
-      axios
-        .get(url, {
-          responseType: 'blob'
-        })
-        .then(res => {
-          this.spinShow = false
-          var reader = new FileReader()
-          reader.readAsArrayBuffer(res.data)
-          reader.onload = () => {
-            vm.loadProject(reader.result).then(() => {
-              // this.spinShow = false
-            })
-          }
-        })
     },
     start () {
-      console.log('start')
       // this.setHeaderNavVisible(false)
       this.isStart = true
-      this.vm.greenFlag() // 执行程序
+      this.iframeWindow.vm.greenFlag() // 执行程序
     },
     stop () {
-      console.log('stop')
       this.isStart = false
       // this.setHeaderNavVisible(true)
-      this.vm.stopAll()
+      this.iframeWindow.vm.stopAll()
     }
   }
 }
